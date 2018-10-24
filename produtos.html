@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Controle de Vendas</title>
+    <link rel="stylesheet" href="css/photon.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
+</head>
+
+<body>
+    <div class="window">
+        <header class="toolbar toolbar-header" id="backgroundToolbar">
+            <h1 class="title" id="title">DDB Controle</h1>
+            <div class="toolbar-actions" id="groupBtn">
+                <div class="btn-group" id="backgroundBtnGoup">
+                    <a class="btn btn-default" href="index.html" id="btnTAB">
+                        <span class="fa fa-address-book"></span>
+                        CLIENTES
+                    </a>
+                    <a class="btn btn-default active" href="produtos.html" id="btnTAB">
+                        <span class="fa fa-shopping-bag"></span>
+                        PRODUTOS
+                    </a>
+                    <a class="btn btn-default" href="vendas.html" id="btnTAB">
+                        <span class="fa fa-shopping-basket"></span>
+                        VENDAS
+                    </a>
+                </div>
+
+                <button class="btn btn-default btn-default" @click="createProduct()" style="position: absolute;right:0" id="btnAction">
+                    <span class="fa fa-tag"></span>
+                    CADASTRAR PRODUTO
+                </button>
+            </div>
+        </header>
+        <div class="window-content" id="backgroundWindowsContent">
+            <div class="pane-group" id="backgroundPaneGroup">
+                <div class="pane" id="backgroundPane">
+                    <table class="table table-striped" id="backgroundLightColor">
+                        <thead>
+                            <tr id="backgroundTR">
+                                <th id="backgroundTR">Código</th>
+                                <th id="backgroundTR">Nome</th>
+                                <th id="backgroundTR">Preço</th>
+                                <th id="backgroundTR">Qtd</th>
+                                <th id="backgroundTR"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="produto in produtos">
+                                <td>{{produto.cod}}</td>
+                                <td>{{produto.nome}}</td>
+                                <td>{{produto.preco}}</td>
+                                <td>{{produto.qtd}}</td>
+                                <td>
+                                    <button type="button" class="btn btn-primary" @click="editProduct(produto)" id="backgroundListButton">
+                                        Editar
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="position: absolute;right:0;bottom:0">
+                        <button onclick="infoClientsPage() " id="btnInfo">
+                            <i class="fa fa-info-circle fa-2x"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer class="toolbar toolbar-footer" id="footer">
+            <h1 class="title" id="footer">Desenvolvido por Willian Bianchi</h1>
+        </footer>
+    </div>
+    <!--PARA APARECER A JANELA DESTACADA-->
+    <div id="modal_produto" v-if="openModal">
+        <div class="wrap">
+            <!--MODELO DE FORMULARIO PRODUTO-->
+            <form id='formsCadastroProduto' action="" class="pane-body">
+                <h3 v-if="mode === 'cadastro'">
+                    Cadastro de Produto
+                </h3>
+                <h3 v-if="mode === 'edicao'">
+                    Edição de Produto
+                </h3>
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="Código" id="inpuCod" v-model="list_product.product.cod" />
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="Nome" id="inputName" v-model="list_product.product.nome" />
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="Preço" id="inputPreco" v-model="list_product.product.preco" />
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="Quantidade" id="inputQtd" v-model="list_product.product.qtd" />
+                </div>
+                <button type="button" class="btn btn-large btn-negative" id="btnCancelar" @click="modal_2.openModal = false">Cancelar</button>
+                <button type="button" class="btn btn-large btn-positive" id="btnSalvar" @click="productStoreOrUpdate()">Salvar</button>
+            </form>
+        </div>
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script>
+    var read = require('read-file-utf8')
+    var loki = require('lokijs');
+    var db = new loki('db.json');
+    var data = read(__dirname + '/db.json');
+    db.loadJSON(data);
+    window.vue = require('vue');
+    var produtos = db.getCollection('produtos');
+
+    //CONTROLA BOTÕES NO HEAD
+    var btnGroup = new Vue({
+        el: '#groupBtn',
+        data: {
+        },
+        methods: {
+            //CADASTRAR produto
+            createProduct: function () {
+                modal_2.mode = 'cadastro';
+                modal_2.openModal = true;
+                //LIMPAR OS DADOS DO IMPUTS
+                list_product.product = {
+                    cod: '',
+                    nome: '',
+                    preco: '',
+                    qtd: ''
+                }
+            }
+        }
+    })
+    //CONTROLA MODAL
+    var modal_2 = new Vue({
+        el: '#modal_produto',
+        data: {
+            openModal: false,
+            mode: ''
+        },
+        methods: {
+            productStoreOrUpdate: function () {
+                if (typeof list_product.product.$loki != 'undefined') {
+                    produtos.update(list_product.product);
+                    alert('Alterado!');
+                } else {
+                    produtos.insert(list_product.product);
+                    alert('Salvo!');
+                }
+                db.save();
+                this.openModal = false;
+            }
+        }
+    })
+    //CONTROLA A LISTA DE USUÁRIOS
+    var list_product = new Vue({
+        el: 'tbody',
+        data: {
+            produtos: [],
+            product: {
+                cod: '',
+                nome: '',
+                preco: '',
+                qtd: ''
+            }
+        },
+        mounted: function () {
+            this.produtos = produtos.data;
+        },
+        methods: {
+            //EDITAR PRODUTO
+            editProduct: function (product) {
+                modal_2.mode = 'edicao';
+                modal_2.openModal = true;
+                this.product = product;
+            }
+        }
+    })
+    function infoClientsPage() {
+        alert("Nesta tela, é possivel cadastrar um novo produto, consultar os que já estão cadastrados e alterar os mesmos.");
+    }
+</script>

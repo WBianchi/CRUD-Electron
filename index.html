@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+      <!--Index da aplicação de controle de vendas e cadastro-->
+<head>
+  <meta charset="UTF-8">
+  <title>Controle de Vendas</title>
+  <link rel="stylesheet" href="css/photon.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
+  <link href="https://fonts.googleapis.com/css?family=Nunito+Sans" rel="stylesheet">
+</head>
+
+<body>      <!--Body e Menu!-->
+  <div class="window">
+    <header class="toolbar toolbar-header" id="backgroundToolbar">
+      <h1 class="title" id="title">DDB Controle</h1>
+      <div class="toolbar-actions" id="groupBtn">
+        <div class="btn-group" id="backgroundBtnGoup">
+          <a class="btn btn-default active" href="index.html" id="btnTAB">
+            <span class="fa fa-address-book"></span>
+            CLIENTES
+          </a>
+          <a class="btn btn-default" href="produtos.html" id="btnTAB">
+            <span class="fa fa-shopping-bag"></span>
+            PRODUTOS
+          </a>
+          <a class="btn btn-default" href="vendas.html" id="btnTAB">
+            <span class="fa fa-shopping-basket"></span>
+            VENDAS
+          </a>
+        </div>
+
+        <button class="btn btn-default btn-default" @click="createClient()" style="position: absolute;right:0" id="btnAction">
+          <span class="fa fa-user-plus"></span>
+          CADASTRAR CLIENTE
+        </button>
+      </div>
+    </header>
+    <div class="window-content" id="backgroundWindowsContent">
+      <div class="pane-group" id="backgroundPaneGroup">
+        <div class="pane" id="backgroundPane">
+          <table class="table table-striped" id="backgroundLightColor">
+            <thead>
+              <tr id="backgroundTR">
+                <th id="backgroundTR">Nome</th>
+                <th id="backgroundTR">CPF</th>
+                <th id="backgroundTR">Telefone</th>
+                <th id="backgroundTR"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="cliente in clientes"> <!--Inicio da utilização do VUE.JS 2.0 e seus componentes!-->
+                <td>{{cliente.nome}}</td>
+                <td>{{cliente.cpf}}</td>
+                <td>{{cliente.telefone}}</td>
+                <td>
+                  <button type="button" class="btn btn-primary" @click="editClient(cliente)" id="backgroundListButton">
+                    Editar
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="position: absolute;right:0;bottom:0">
+            <button onclick="infoClientsPage() " id="btnInfo"> 
+              <i class="fa fa-info-circle fa-2x"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer class="toolbar toolbar-footer" id="footer">
+      <h1 id="footer" class="title">Desenvolvido por DDBIANCHI</h1>
+    </footer>
+  </div>
+  <!--PARA APARECER A JANELA DESTACADA-->
+  <div id="modal_cliente" v-if="openModal">
+    <div class="wrap">
+      <!--MODELO DE FORMULARIO PRODUTO-->
+      <form id='formsCadastroCliente' action="" class="pane-body">
+        <h3 v-if="mode === 'cadastro'">
+          Cadastro de Cliente
+        </h3>
+        <h3 v-if="mode === 'edicao'">
+          Edição de Cliente     <!--Fim da utilização do VUE.JS!-->
+        </h3>
+        <div class="form-group">  <!--Inicio do formulario de cadastro e registro!-->
+          <input type="text" class="form-control" placeholder="Nome" id="inputName" v-model="list_clients.client.nome" />
+        </div>
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="CPF" id="inputCPF" v-model="list_clients.client.cpf" />
+        </div>
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Telefone" id="inputTelefone" v-model="list_clients.client.telefone"
+          />
+        </div>
+        <button type="button" class="btn btn-large btn-negative" id="btnCancelar" @click="modal_1.openModal = false">Cancelar</button>
+        <button type="button" class="btn btn-large btn-positive" id="btnSalvar" @click="clientStoreOrUpdate()">Salvar</button>
+      </form>       <!--Fim do formulario de cadastro e registro!-->
+    </div>
+  </div>
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/vue"></script> <!--Inicio da conexão com o banco Loki JS!-->
+<script>  
+  var read = require('read-file-utf8')
+  var loki = require('lokijs');
+  var db = new loki(__dirname+'/db.json')
+  var fileExists = require('file-exists');
+  var data = {};
+
+  window.vue = require('vue');
+
+  fileExists(__dirname + '/db.json').then(exists => {
+    ifExistsFile(exists);
+  })
+
+  function ifExistsFile(exists) {       
+    if (exists === true) {
+    } else {
+      db.addCollection('vendas');
+      db.addCollection('clientes');
+      db.addCollection('produtos');
+      db.save(function () {
+        const remote = require('electron').remote;
+        remote.app.relaunch();
+        remote.app.exit(0);
+      });
+    }
+  }
+  data = read(__dirname + '/db.json');
+  db.loadJSON(data);
+
+  var clientes = db.getCollection('clientes'); 
+
+  //Controle de botões head
+  var btnGroup = new Vue({
+    el: '#groupBtn',
+    data: {
+    },
+    methods: {
+      //Cadastrar cliente
+      createClient: function () {
+        modal_1.mode = 'cadastro';
+        modal_1.openModal = true;
+        //Limpar os dados do imput
+        list_clients.client = {
+          nome: '',
+          cpf: '',
+          telefone: ''
+        }
+      }
+    }
+  })
+  //Controle do modal
+  var modal_1 = new Vue({
+    el: '#modal_cliente',
+    data: {
+      openModal: false,
+      mode: ''
+    },
+    methods: {
+      clientStoreOrUpdate: function () {
+        if (typeof list_clients.client.$loki != 'undefined') {
+          clientes.update(list_clients.client);
+          alert('Alterado!');
+        } else {
+          clientes.insert(list_clients.client);
+          alert('Salvo!');
+        }
+        db.save();
+        this.openModal = false;
+      }
+    }
+  })
+  //Controle da lista de usuarios
+  var list_clients = new Vue({
+    el: 'tbody',
+    data: {
+      clientes: [],
+      client: {
+        nome: '',
+        cpf: '',
+        telefone: ''
+      }
+    },
+    mounted: function () {
+      this.clientes = clientes.data;
+    },
+    methods: {
+      //Editar o cliente
+      editClient: function (client) {
+        //alert('TESTE');
+        modal_1.mode = 'edicao';
+        modal_1.openModal = true;
+        this.client = client;
+      }
+    }
+  })
+  //Botão alert para auto ajuda
+  function infoClientsPage() {
+    alert("Nesta tela, é possivel cadastrar um novo cliente, consultar os que já possui no cadastro e alterar os mesmos.");
+  }
+</script>
+
+</html>

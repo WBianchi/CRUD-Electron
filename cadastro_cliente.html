@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Controle de vendas</title>
+    <meta charset="utf-8"/>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/photon.css"/>
+    <link rel="stylesheet" href="css/style.css"/>
+    <link rel="stylesheet" href="css/style.css"/>
+  </head>
+
+  <body>
+    <div class="window">
+        <header class="toolbar toolbar-header">
+            <h1 class="title">DDB Controle</h1>
+            <div class="toolbar-actions">
+                <div class="btn-group">
+                  <button class="btn btn-default">
+                    <span class="icon icon-home"></span>
+                  </button>
+                  <button class="btn btn-default">
+                    <span class="icon icon-folder"></span>
+                  </button>
+                  <button class="btn btn-default active">
+                    <span class="icon icon-cloud"></span>
+                  </button>
+                  <button class="btn btn-default">
+                    <span class="icon icon-popup"></span>
+                  </button>
+                  <button class="btn btn-default">
+                    <span class="icon icon-shuffle"></span>
+                  </button>
+                </div>
+            
+                <button class="btn btn-default">
+                  <span class="icon icon-home icon-text"></span>
+                  Filters
+                </button>
+            
+                <button class="btn btn-default btn-dropdown pull-right">
+                  <span class="icon icon-megaphone"></span>
+                </button>
+              </div>
+          </header>
+      <div class="window-content">
+        <div class="pane-group">
+          <div class="pane-sm sidebar"><p>Fez exprimindo recordarei dei has inventario dez necessitas. Desdemnao caminhava desgostei ha ja. Afoito chapeo diz teu aturar ameaca. Sao acompanhar com reproduzir declamacao obtemperou bem vivissimos tao. Ao joao vejo maco va haja faca um. Da tu as eivado pensou vereda.</p></div>
+          <div class="pane">
+              <form id='formsCadastroCliente' action="" class="pane-body">
+                <h3>Cadastro de Cliente</h3>
+                <div class="form-group">
+                  <input type="text" class="form-control" placeholder="Nome" id="inputName">
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="CPF" id="inputCPF">
+                  </div>
+                  <div class="form-group">
+                      <input type="text" class="form-control" placeholder="Telefone" id="inputTelefone">
+                    </div>
+                  <button class="btn btn-large btn-positive" id="btnSalvar">Salvar</button>
+                  <button class="btn btn-large btn-negative" id="btnCancelar">Cancelar</button>
+              </form>
+          </div>
+        </div>
+      </div>
+      <footer class="toolbar toolbar-footer">
+          <h1 class="title">Desenvolvido por DDBIANCHI LTDA</h1>
+        </footer>
+    </div>
+  </body>
+  <script>
+    // You can also require other files to run in this process
+    require('./renderer.js')
+  </script>
+</html>

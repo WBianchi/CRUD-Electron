@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Controle de Vendas</title>
+    <link rel="stylesheet" href="css/photon.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
+</head>
+
+<body>
+    <div class="window">
+        <header class="toolbar toolbar-header" id="backgroundToolbar">
+            <h1 class="title" id="title">DDB Controle</h1>
+            <div class="toolbar-actions" id="groupBtn">
+                <div class="btn-group" id="backgroundBtnGoup">
+                    <a class="btn btn-default" href="index.html" id="btnTAB">
+                        <span class="fa fa-address-book"></span>
+                        CLIENTES
+                    </a>
+                    <a class="btn btn-default" href="produtos.html" id="btnTAB">
+                        <span class="fa fa-shopping-bag"></span>
+                        PRODUTOS
+                    </a>
+                    <a class="btn btn-default active" href="vendas.html" id="btnTAB">
+                        <span class="fa fa-shopping-basket"></span>
+                        VENDAS
+                    </a>
+                </div>
+
+                <button class="btn btn-default btn-default" @click="createSale()" style="position: absolute;right:0" id="btnAction">
+                    <span class="fa fa-cart-plus"></span>
+                    CADASTRAR VENDA
+                </button>
+            </div>
+        </header>
+        <div class="window-content" id="backgroundWindowsContent">
+            <div class="pane-group" id="backgroundPaneGroup">
+                <div class="pane" id="backgroundPane">
+                    <table class="table table-striped" id="backgroundLightColor">
+                        <thead>
+                            <tr id="backgroundTR">
+                                <th id="backgroundTR">Cliente</th>
+                                <th id="backgroundTR">Produto</th>
+                                <th id="backgroundTR">Preço Unit.</th>
+                                <th id="backgroundTR">Qtd</th>
+                                <th id="backgroundTR">Total</th>
+                                <th id="backgroundTR"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="venda in vendas">
+                                <td>{{venda.cliente}}</td>
+                                <td>{{venda.produto}}</td>
+                                <td>R$ {{venda.preco}}</td>
+                                <td>{{venda.qtd}}</td>
+                                <td>R$ {{venda.qtd*venda.preco}}</td>
+                                <td>
+                                    <button type="button" class="btn btn-primary" @click="editSale(venda)" id="backgroundListButton">
+                                        Editar
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="position: absolute;right:0;bottom:0">
+                        <button onclick="infoClientsPage() " id="btnInfo">
+                            <i class="fa fa-info-circle fa-2x"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer class="toolbar toolbar-footer" id="footer">
+            <h1 class="title" id="footer">Desenvolvido por DDBIANCHI LTDA</h1>
+        </footer>
+    </div>
+    <!--PARA APARECER A JANELA DESTACADA-->
+    <div id="modal_venda" v-if="openModal">
+        <div class="wrap">
+            <!--MODELO DE FORMULARIO venda-->
+            <form id='formsCadastroVenda' action="" class="pane-body">
+                <h3 v-if="mode === 'cadastro'">
+                    Cadastro de Venda
+                </h3>
+                <h3 v-if="mode === 'edicao'">
+                    Edição de Venda
+                </h3>
+                <div class="form-group">
+                    <select v-if="mode === 'cadastro'" id="client_name" class="form-control">
+                        <option disabled value="" selected="selected">Escolha um cliente</option>
+                        <option value="{{c.nome}}" v-for="c in clientes">{{c.nome}}</option>
+                    </select>
+                    <input v-if="mode === 'edicao'" type="text" class="form-control" placeholder="Quantidade" id="inputCliente" v-model="list_sale.sale.cliente"
+                        readonly/>
+                </div>
+                <div class="form-group">
+                    <select id="prod_name" class="form-control">
+                        <option v-if="mode === 'cadastro'" disabled value="" selected="selected">Escolha um produto</option>
+                        <option value="{{p.nome}}" v-for="p in produtos">{{p.nome}}</option>
+                        <option v-if="mode === 'edicao'" value="" selected="selected">{{list_sale.sale.produto}}</option>
+                    </select>
+                </div>
+                <div class="form-group" v-if="mode === 'edicao'">
+                    <input type="text" class="form-control" placeholder="Preço" id="inputPreco" v-model="list_sale.sale.preco" />
+                </div>
+                <div class="form-group">
+                    <input type="number" class="form-control" placeholder="Quantidade" id="inputQtd" v-model="list_sale.sale.qtd" />
+                </div>
+                <button v-if="mode === 'cadastro'" type="button" class="btn btn-large btn-negative" id="btnCancelar" @click="modal_3.openModal = false">Cancelar Venda</button>
+                <button v-if="mode === 'cadastro'" type="button" class="btn btn-large btn-positive" id="btnSalvar" @click="saleStoreOrUpdae()">Realizar Venda</button>
+                <button v-if="mode === 'edicao'" type="button" class="btn btn-large btn-negative" id="btnCancelar" @click="modal_3.openModal = false">Cancelar Edição</button>
+                <button v-if="mode === 'edicao'" type="button" class="btn btn-large btn-positive" id="btnSalvar" @click="saleStoreOrUpdae()">Salvar Edição</button>
+            </form>
+        </div>
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script>
+    var read = require('read-file-utf8')
+    var loki = require('lokijs');
+    var db = new loki('db.json');
+    var data = read(__dirname + '/db.json');
+    db.loadJSON(data);
+    window.vue = require('vue');
+    var vendas = db.getCollection('vendas');
+    var clientes = db.getCollection('clientes');
+    var produtos = db.getCollection('produtos');
+
+    //CONTROLA BOTÕES NO HEAD
+    var btnGroup = new Vue({
+        el: '#groupBtn',
+        data: {
+        },
+        methods: {
+            //CADASTRAR venda
+            createSale: function () {
+                modal_3.mode = 'cadastro';
+                modal_3.openModal = true;
+                //LIMPAR OS DADOS DO IMPUTS
+                list_sale.sale = {
+                    cliente: '',
+                    produto: '',
+                    preco: 0,
+                    qtd: 1
+                }
+            }
+        }
+    })
+    //CONTROLA MODAL
+    var modal_3 = new Vue({
+        el: '#modal_venda',
+        data: {
+            openModal: false,
+            mode: '',
+            clientes: [],
+            produtos: []
+        },
+        mounted: function () {
+            this.clientes = clientes.data;
+            this.produtos = produtos.data;
+            this.vendas = vendas.data;
+        },
+        methods: {
+            saleStoreOrUpdae: function () {
+                if (typeof list_sale.sale.$loki != 'undefined') {
+                    var select_prod = document.getElementById("prod_name");
+                    var prod_name = select_prod.options[select_prod.selectedIndex].text;
+
+                    list_sale.sale.produto = produtos.find({ nome: prod_name })[0].nome;
+                    vendas.update(list_sale.sale);
+                    alert('Alterado!');
+                } else {
+                    var select_prod = document.getElementById("prod_name");
+                    var select_client = document.getElementById("client_name");
+                    var prod_name = select_prod.options[select_prod.selectedIndex].text;
+                    var client_name = select_client.options[select_client.selectedIndex].text;
+
+                    list_sale.sale.cliente = clientes.find({ nome: client_name })[0].nome;
+                    list_sale.sale.produto = produtos.find({ nome: prod_name })[0].nome;
+                    list_sale.sale.preco = produtos.find({ nome: prod_name })[0].preco;
+                    vendas.insert(list_sale.sale);
+                    alert('Salvo!');
+                }
+                db.save();
+                this.openModal = false;
+            },
+        }
+    })
+    //CONTROLA A LISTA DE USUÁRIOS
+    var list_sale = new Vue({
+        el: 'tbody',
+        data: {
+            vendas: [],
+            sale: {
+                cliente: '',
+                produto: '',
+                preco: 0,
+                qtd: 1
+            }
+        },
+        mounted: function () {
+            this.vendas = vendas.data;
+        },
+        methods: {
+            //EDITAR venda
+            editSale: function (item) {
+                this.sale = item;
+                modal_3.mode = 'edicao';
+                modal_3.openModal = true;
+            }
+        }
+    })
+    function infoClientsPage() {
+        alert("Nesta tela, é possivel cadastrar uma venda, consultar as vendas ja realizadas e alterar os dados MENOS o cliente que realizou a compra.");
+    }
+</script>
